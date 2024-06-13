@@ -1,0 +1,70 @@
+version: '3.5'
+
+services:
+  postgres:
+    container_name: guru_container
+    image: 'postgres:15-alpine'
+    environment:
+      POSTGRES_USER: guru
+#      POSTGRES_USER: ${POSTGRES_USER:-guruBot}
+      POSTGRES_PASSWORD: admin
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: guruDB
+#      LANG: en_US.utf8
+#      LC_ALL: en_US.utf8
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "6432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:
+
+
+
+
+
+
+
+
+#version: '3.1'
+#
+#services:
+#  db:
+#    image: postgres:latest
+#    environment:
+#      - DATABASE_USER=admin
+#      - DATABASE_PASS=password
+#      - DATABASE_URL=jdbc:postgresql://localhost:5432/guruBotDataBase?useUnicode=true&characterEncoding=UTF-8
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres-data:/var/lib/postgresql/data
+#
+#volumes:
+#  postgres-data:
