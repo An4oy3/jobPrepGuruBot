@@ -43,13 +43,13 @@ public class Question {
 
     public List<Answer> getRightAnswers() {
         return answers.stream()
-                .filter(Answer::getIsRight)
+                .filter(Answer::isRight)
                 .toList();
     }
 
     public List<Answer> getWrongAnswers() {
         return answers.stream()
-                .filter(answer -> !answer.getIsRight())
+                .filter(answer -> !answer.isRight())
                 .toList();
     }
 }

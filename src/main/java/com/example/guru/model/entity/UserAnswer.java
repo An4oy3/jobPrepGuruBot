@@ -32,7 +32,7 @@ public class UserAnswer {
     private Long id;
 
     @Column(name = "is_right")
-    private Boolean isRight;
+    private boolean isRight;
 
     @ManyToOne()
     private User user;

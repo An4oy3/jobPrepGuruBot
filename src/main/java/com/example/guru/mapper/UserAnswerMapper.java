@@ -15,5 +15,6 @@ public interface UserAnswerMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "dateTime", expression = "java(LocalDateTime.now())")
     @Mapping(target = "answer", source = "answer")
+    @Mapping(target = "isRight", expression = "java(answer.isRight())")
     UserAnswer convert(Answer answer, User user);
 }

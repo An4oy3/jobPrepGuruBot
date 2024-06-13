@@ -33,7 +33,7 @@ public class Answer {
     private Question question;
 
     @Column(name = "is_right")
-    private Boolean isRight;
+    private boolean isRight;
 
     private String text;
 }

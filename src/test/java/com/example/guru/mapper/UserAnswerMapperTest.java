@@ -29,7 +29,7 @@ public class UserAnswerMapperTest {
 
         UserAnswer result = mapper.convert(answer, user);
 
-        assertEquals(answer.getIsRight(), result.getIsRight());
+        assertEquals(answer.isRight(), result.isRight());
         assertEquals(user, result.getUser());
         assertEquals(answer.getQuestion(), result.getQuestion());
         assertEquals(answer, result.getAnswer());
