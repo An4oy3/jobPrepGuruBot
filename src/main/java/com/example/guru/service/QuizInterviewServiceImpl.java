@@ -90,28 +90,6 @@ public class QuizInterviewServiceImpl implements InterviewService {
 
     @Transactional
     @Override
-    public String getInterviewStatistic(Long interviewSessionId) {
-        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
-
-        return " Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
-                "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
-                "Wrong Answers: " + interviewSession.getWrongAnswers() + "\n" +
-                "Correct answers rate: " + interviewSession.getCorrectAnswersRate();
-    }
-
-    @Transactional
-    @Override
-    public void finishInterview(Long interviewSessionId) {
-        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
-        interviewSession.setIsFinished(true);
-        interviewSession.setCorrectAnswersRate((double) interviewSession.getRightAnswers() / interviewSession.getQuestions().size() * 100);
-        interviewSessionRepository.save(interviewSession);
-    }
-
-    @Transactional
-    @Override
     public String checkAnswer(Long answerId, Long interviewSessionId) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new AnswerNotFoundException("Answer with id: \"" + answerId + "\" not found"));
@@ -134,6 +112,28 @@ public class QuizInterviewServiceImpl implements InterviewService {
             interviewSession.setCorrectAnswersRate(( (double) interviewSession.getRightAnswers() / prevQuestions.size()) * 100);
             return "\n\n\n Ah, missed! But you're still great! \n\n\n\n";
         }
+    }
+
+    @Transactional
+    @Override
+    public String getInterviewStatistic(Long interviewSessionId) {
+        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
+                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
+
+        return " Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
+                "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
+                "Wrong Answers: " + interviewSession.getWrongAnswers() + "\n" +
+                "Correct answers rate: " + interviewSession.getCorrectAnswersRate();
+    }
+
+    @Transactional
+    @Override
+    public void finishInterview(Long interviewSessionId) {
+        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
+                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
+        interviewSession.setIsFinished(true);
+        interviewSession.setCorrectAnswersRate((double) interviewSession.getRightAnswers() / interviewSession.getQuestions().size() * 100);
+        interviewSessionRepository.save(interviewSession);
     }
 
     private SendMessage buildSendMessage(InterviewSession interviewSession, Question nextQuestion) {
