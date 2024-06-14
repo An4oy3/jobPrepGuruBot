@@ -56,6 +56,12 @@ public class GuruBot implements LongPollingSingleThreadUpdateConsumer, SpringLon
                 InterviewSession newSession = interviewService.openInterview(user.getChat(), user);
                 sendMessage = interviewService.generateQuestion(newSession.getId());
                 sendMessage.setText("\n\n\n Ok! Let`start new interview: \n" + sendMessage.getText());
+            } else if (callBackData[2].equals("-1")) {
+                interviewService.finishInterview(Long.parseLong(callBackData[0]));
+                sendMessage = SendMessage.builder()
+                        .chatId(update.getCallbackQuery().getMessage().getChatId())
+                        .text("Thanks for the game! You were awesome \n\n\n" + interviewService.getInterviewStatistic(Long.parseLong(callBackData[0])))
+                        .build();
             } else {
                 String result = interviewService.checkAnswer(Long.parseLong(callBackData[2]), Long.parseLong(callBackData[0]));
                 sendMessage = interviewService.generateQuestion(Long.parseLong(callBackData[0]));
@@ -95,8 +101,8 @@ public class GuruBot implements LongPollingSingleThreadUpdateConsumer, SpringLon
                                 .callbackData("-1" + CALLBACK_DELIMITER + InterviewType.QUIZ_MODE.name() + CALLBACK_DELIMITER)
                                 .build()))
                         .keyboardRow(new InlineKeyboardRow(InlineKeyboardButton.builder()
-                                .text(InterviewType.CREATIVITY_MODE.name())
-                                .callbackData("-1" + CALLBACK_DELIMITER + InterviewType.CREATIVITY_MODE.name() + CALLBACK_DELIMITER)
+                                .text(InterviewType.INTERACTIVE_AI_MODE.name())
+                                .callbackData("-1" + CALLBACK_DELIMITER + InterviewType.INTERACTIVE_AI_MODE.name() + CALLBACK_DELIMITER)
                                 .build()))
                         .build();
     }

@@ -13,7 +13,7 @@ public interface InterviewService {
 
     String checkAnswer(Long answerId, Long interviewSessionId);
 
-    String getInterviewStatistic(InterviewSession interviewSession);
+    String getInterviewStatistic(Long interviewSessionId);
 
     void finishInterview(Long interviewSessionId);
 }

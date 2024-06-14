@@ -10,7 +10,7 @@ public enum InterviewType {
     COMPETITIVE_MODE("quizUntilWrong",
             "Question-answer format. A question with several options, one of which is correct. " +
                     "The interview continues until the first incorrect answer is given."),
-    CREATIVITY_MODE("creativeQuiz", "");
+    INTERACTIVE_AI_MODE("creativeQuiz", "");
 
 
     private final String name;

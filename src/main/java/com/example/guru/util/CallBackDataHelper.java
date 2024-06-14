@@ -29,7 +29,16 @@ public class CallBackDataHelper {
         return result;
     }
 
-    public String buildCallBackMsg(Long interviewSessionId, InterviewType interviewType, Long answerId) {
-        return interviewSessionId + DELIMITER + interviewType.name() + DELIMITER + answerId;
+    /**
+     * The method create callBackQueryData.
+     *
+     * @param interviewSessionId unique identification of the interview session. -1 in case of the first request.
+     * @param interviewType      type of interview.(Quiz, Competitive, Interactive/AI)
+     * @param answer             unique identification of user`s answer. -1 in case of finishing the interview. Just text format
+     *                           in case of Interactive/AI mode.
+     * @return callBackMessage
+     */
+    public String buildCallBackMsg(Long interviewSessionId, InterviewType interviewType, String answer) {
+        return interviewSessionId + DELIMITER + interviewType.name() + DELIMITER + answer;
     }
 }

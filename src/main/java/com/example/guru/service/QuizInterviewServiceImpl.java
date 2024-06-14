@@ -26,7 +26,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +61,7 @@ public class QuizInterviewServiceImpl implements InterviewService {
     @Transactional
     @Override
     public SendMessage generateQuestion(Long interviewSessionId) {
-        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
+        InterviewSession interviewSession = interviewSessionRepository.findByIdAndIsFinishedFalse(interviewSessionId)
                 .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found or it`s finished"));
         //TODO Change the logic!
         List<Question> availableQuestions;
@@ -77,26 +79,22 @@ public class QuizInterviewServiceImpl implements InterviewService {
             finishInterview(interviewSession.getId());
             return SendMessage.builder()
                     .chatId(interviewSession.getChat().getId())
-                    .text("You`ve answered all questions. Congratulations! \n " +
-                            getInterviewStatistic(interviewSession))
+                    .text(" You`ve answered all questions. Congratulations! \n " +
+                            getInterviewStatistic(interviewSession.getId()))
                     .build();
         } else {
             Collections.shuffle(availableQuestions);
-            Question nextQuestion = availableQuestions.get(0);
-            return SendMessage.builder()
-                    .chatId(interviewSession.getChat().getId())
-                    .text("The next question is : \n" + nextQuestion.getText())
-                    .replyMarkup(InlineKeyboardMarkup.builder()
-                            .keyboard(buildKeyboard(interviewSession, nextQuestion))
-                            .build())
-                    .build();
+            return buildSendMessage(interviewSession, availableQuestions.get(0));
         }
     }
 
+    @Transactional
     @Override
-    public String getInterviewStatistic(InterviewSession interviewSession) {
+    public String getInterviewStatistic(Long interviewSessionId) {
+        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
+                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
 
-        return "Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
+        return " Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
                 "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
                 "Wrong Answers: " + interviewSession.getWrongAnswers() + "\n" +
                 "Correct answers rate: " + interviewSession.getCorrectAnswersRate();
@@ -112,33 +110,12 @@ public class QuizInterviewServiceImpl implements InterviewService {
         interviewSessionRepository.save(interviewSession);
     }
 
-    private List<InlineKeyboardRow> buildKeyboard(InterviewSession interviewSession, Question question) {
-        List<InlineKeyboardRow> rows = new ArrayList<>();
-
-        question.getWrongAnswers().stream()
-                .limit(3)
-                .forEach(answer -> rows.add(new InlineKeyboardRow(InlineKeyboardButton.builder()
-                        .text(answer.getText())
-                        .callbackData(CallBackDataHelper.buildCallBackMsg(interviewSession.getId(), interviewSession.getInterviewType(), answer.getId()))
-                        .build())));
-
-        question.getRightAnswers().stream()
-                .limit(4 - rows.size())
-                .forEach(answer -> rows.add(new InlineKeyboardRow(InlineKeyboardButton.builder()
-                        .text(answer.getText())
-                        .callbackData(CallBackDataHelper.buildCallBackMsg(interviewSession.getId(), interviewSession.getInterviewType(), answer.getId()))
-                        .build())));
-
-        Collections.shuffle(rows);
-        return rows;
-    }
-
     @Transactional
     @Override
     public String checkAnswer(Long answerId, Long interviewSessionId) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new AnswerNotFoundException("Answer with id: \"" + answerId + "\" not found"));
-        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
+        InterviewSession interviewSession = interviewSessionRepository.findByIdAndIsFinishedFalse(interviewSessionId)
                 .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found or it`s finished"));
 
         userAnswerRepository.save(userAnswerMapper.convert(answer, interviewSession.getUser()));
@@ -155,7 +132,57 @@ public class QuizInterviewServiceImpl implements InterviewService {
         } else {
             interviewSession.setWrongAnswers(interviewSession.getWrongAnswers() + 1);
             interviewSession.setCorrectAnswersRate(( (double) interviewSession.getRightAnswers() / prevQuestions.size()) * 100);
-            return "\n\n\n Ah, missed! But you're still great!";
+            return "\n\n\n Ah, missed! But you're still great! \n\n\n\n";
         }
+    }
+
+    private SendMessage buildSendMessage(InterviewSession interviewSession, Question nextQuestion) {
+        Map<Integer, Answer> optionAnswerMap = new HashMap<>();
+        List<Answer> options = new ArrayList<>();
+        nextQuestion.getWrongAnswers().stream()
+                .limit(3)
+                .forEach(options::add);
+        nextQuestion.getRightAnswers().stream()
+                .limit(4 - options.size())
+                .forEach(options::add);
+
+        Collections.shuffle(options);
+        for (int i = 1; i < options.size() + 1; i++) {
+            optionAnswerMap.put(i, options.get(i - 1));
+        }
+
+
+        return SendMessage.builder()
+                .chatId(interviewSession.getChat().getId())
+                .text(" The next question is : \n" + nextQuestion.getText() + "\n\n\n" + "Answer options: \n\n\n" + buildAnswerOptions(optionAnswerMap))
+                .replyMarkup(InlineKeyboardMarkup.builder()
+                        .keyboard(buildKeyboard(interviewSession, optionAnswerMap))
+                        .build())
+                .build();
+    }
+
+    private List<InlineKeyboardRow> buildKeyboard(InterviewSession interviewSession, Map<Integer, Answer> optionAnswerMap) {
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+
+        optionAnswerMap.forEach((key, value) ->
+                rows.add(new InlineKeyboardRow(InlineKeyboardButton.builder()
+                        .text(key.toString())
+                        .callbackData(CallBackDataHelper.buildCallBackMsg(interviewSession.getId(), interviewSession.getInterviewType(), value.getId().toString()))
+                        .build())));
+
+        rows.add(new InlineKeyboardRow(InlineKeyboardButton.builder()
+                .text("Finish")
+                .callbackData(CallBackDataHelper.buildCallBackMsg(interviewSession.getId(), interviewSession.getInterviewType(), "-1"))
+                .build()));
+
+        return rows;
+    }
+
+    private String buildAnswerOptions(Map<Integer, Answer> optionAnswerMap) {
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<Integer, Answer> entry : optionAnswerMap.entrySet()) {
+            result.append(entry.getKey()).append(". ").append(entry.getValue().getText()).append("\n");
+        }
+        return result.toString();
     }
 }

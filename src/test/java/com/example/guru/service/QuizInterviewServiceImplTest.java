@@ -147,9 +147,11 @@ public class QuizInterviewServiceImplTest {
 
     @Test
     public void getInterviewStatistic() {
-        String result = quizInterviewServiceImpl.getInterviewStatistic(interviewSession);
+        when(interviewSessionRepository.findById(interviewSession.getId())).thenReturn(Optional.of(interviewSession));
 
-        assertEquals("Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
+        String result = quizInterviewServiceImpl.getInterviewStatistic(interviewSession.getId());
+
+        assertEquals(" Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
                 "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
                 "Wrong Answers: " + interviewSession.getWrongAnswers() + "\n" +
                 "Correct answers rate: " + interviewSession.getCorrectAnswersRate(),
