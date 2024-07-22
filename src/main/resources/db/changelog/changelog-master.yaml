@@ -3,3 +3,5 @@ databaseChangeLog:
       file: /db/changelog/init-schema.sql
   - include:
       file: /db/changelog/load_data_in_question_&_answer.sql
+  - include:
+      file: /db/changelog/20242706_add_field_last_question_to_interview_session.sql

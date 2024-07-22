@@ -87,3 +87,32 @@ create sequence public.interview_session_id_seq start with 1 increment by 1;
 create sequence public.question_id_seq start with 1 increment by 1;
 create sequence public.user_id_seq start with 1 increment by 1;
 
+create table ai_response
+(
+    completion_tokens bigint,
+    created_at        timestamp(6),
+    prompt_tokens     bigint,
+    total_tokens      bigint,
+    id                varchar(255) not null
+        primary key,
+    model             varchar(255),
+    object            varchar(255)
+);
+
+create table public.ai_response$choice_data
+(
+    id             bigserial
+        primary key,
+    index          bigint,
+    ai_response_id varchar(255)
+        constraint fkc6jp8mcvtahnm9lvgon7cejxx
+            references public.ai_response,
+    content        varchar(255),
+    finish_reason  varchar(255),
+    role           varchar(255)
+        constraint ai_response$choice_data_role_check
+            check ((role)::text = ANY
+        ((ARRAY ['SYSTEM'::character varying, 'USER'::character varying, 'ASSISTANT'::character varying, 'TOOL'::character varying, 'FUNCTION'::character varying])::text[]))
+    );
+
+
