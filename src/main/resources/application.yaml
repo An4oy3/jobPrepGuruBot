@@ -2,14 +2,15 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:6432/guruDB?useUnicode=true&characterEncoding=UTF-8
     driver-class-name: org.postgresql.Driver
-    username: guru
-    password: admin
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       default_schema: public
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
   liquibase:
     change-log: classpath:db/changelog/changelog-master.yaml
     enabled: true
@@ -18,4 +19,7 @@ server:
   port: 8082
 
 telegram:
-  token: 7114928829:AAH0Cln9m0nsL2Y9RKb4n_qLjpY378869z4
+  token: ${TELEGRAM_TOKEN}
+
+ai:
+  token: ${AI_TOKEN}
