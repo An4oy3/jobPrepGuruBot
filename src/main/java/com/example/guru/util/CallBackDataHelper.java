@@ -14,7 +14,7 @@ public class CallBackDataHelper {
      * This is also a rule for forming callBackQueryData.
      * String[0] - An InterviewSession identifier. -1 if that`s the first request.
      * String[1] - InterviewType
-     * String[3] - answer`s id on the last question.
+     * String[2] - answer`s id on the last question. -1 in case of finishing the interview
      */
     public String[] parseCallBack(CallbackQuery query) {
         String[] result = new String[3];
@@ -34,8 +34,7 @@ public class CallBackDataHelper {
      *
      * @param interviewSessionId unique identification of the interview session. -1 in case of the first request.
      * @param interviewType      type of interview.(Quiz, Competitive, Interactive/AI)
-     * @param answer             unique identification of user`s answer. -1 in case of finishing the interview. Just text format
-     *                           in case of Interactive/AI mode.
+     * @param answer             unique identification of user`s answer. -1 in case of finishing the interview.
      * @return callBackMessage
      */
     public String buildCallBackMsg(Long interviewSessionId, InterviewType interviewType, String answer) {
