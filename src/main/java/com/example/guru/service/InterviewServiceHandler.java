@@ -16,7 +16,7 @@ public class InterviewServiceHandler {
     private static final Map<InterviewType, InterviewService> interviewServiceMapRegister = new HashMap<>();
 
     private final QuizInterviewServiceImpl quizInterviewServiceImpl;
-    private final CompetitiveInterviewServiceImpl competitiveInterviewService;
+    private final InteractiveInterviewServiceImpl interactiveInterviewService;
 
     public InterviewService getInterviewService(String interviewType) {
         if (!StringUtils.hasLength(interviewType)) {
@@ -28,6 +28,6 @@ public class InterviewServiceHandler {
     @PostConstruct
     private void registerInit() {
         interviewServiceMapRegister.put(InterviewType.QUIZ_MODE, quizInterviewServiceImpl);
-        interviewServiceMapRegister.put(InterviewType.COMPETITIVE_MODE, competitiveInterviewService);
+        interviewServiceMapRegister.put(InterviewType.INTERACTIVE_AI_MODE, interactiveInterviewService);
     }
 }

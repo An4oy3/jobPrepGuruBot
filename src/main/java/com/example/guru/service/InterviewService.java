@@ -3,17 +3,29 @@ package com.example.guru.service;
 import com.example.guru.model.entity.Chat;
 import com.example.guru.model.entity.InterviewSession;
 import com.example.guru.model.entity.User;
+import com.example.guru.model.entity.enums.InterviewType;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+
+import java.util.Optional;
 
 public interface InterviewService {
 
     InterviewSession openInterview(Chat chat, User user);
 
-    SendMessage generateQuestion(Long interviewSessionId);
+    SendMessage generateQuestion(InterviewSession interviewSession);
 
-    String checkAnswer(Long answerId, Long interviewSessionId);
+    String checkAnswer(String answerData, InterviewSession interviewSession);
 
-    String getInterviewStatistic(Long interviewSessionId);
+    void finishInterview(InterviewSession interviewSession);
 
-    void finishInterview(Long interviewSessionId);
+    Optional<InterviewSession> getOpenedSessionByUserAndInterviewType(User user, InterviewType interviewType);
+
+    InterviewType getInterviewServiceType();
+
+    default String getInterviewStatistic(InterviewSession interviewSession) {
+        return " Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
+                "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
+                "Wrong Answers: " + interviewSession.getWrongAnswers() + "\n" +
+                "Correct answers rate: " + interviewSession.getCorrectAnswersRate();
+    }
 }

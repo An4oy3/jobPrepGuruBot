@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -61,7 +62,7 @@ public class InterviewSession {
     @Column(name = "interview_category_type")
     private CategoryType interviewCategory;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "interview_questions",
     joinColumns = @JoinColumn(name = "interview_session_id"),
     inverseJoinColumns = @JoinColumn(name = "question_id"))
@@ -72,4 +73,8 @@ public class InterviewSession {
 
     @Column(name = "wrong_answers")
     private Integer wrongAnswers;
+
+    @OneToOne()
+    @JoinColumn(name = "last_question_id")
+    private Question lastQuestion;
 }

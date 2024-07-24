@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -52,18 +53,15 @@ public class QuizInterviewServiceImpl implements InterviewService {
                 .createdAt(LocalDateTime.now())
                 .interviewCategory(CategoryType.JAVA)
                 .interviewType(InterviewType.QUIZ_MODE)
+                .questions(Collections.emptyList())
                 .isFinished(false)
                 .build();
         interviewSessionRepository.save(newSession);
         return newSession;
     }
 
-    @Transactional
     @Override
-    public SendMessage generateQuestion(Long interviewSessionId) {
-        InterviewSession interviewSession = interviewSessionRepository.findByIdAndIsFinishedFalse(interviewSessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found or it`s finished"));
-        //TODO Change the logic!
+    public SendMessage generateQuestion(InterviewSession interviewSession) {
         List<Question> availableQuestions;
         if (interviewSession.getQuestions().isEmpty()) {
             availableQuestions = questionRepository.findByCategoryType(interviewSession.getInterviewCategory());
@@ -76,25 +74,25 @@ public class QuizInterviewServiceImpl implements InterviewService {
         }
 
         if (availableQuestions.isEmpty()) {
-            finishInterview(interviewSession.getId());
+            finishInterview(interviewSession);
             return SendMessage.builder()
                     .chatId(interviewSession.getChat().getId())
                     .text(" You`ve answered all questions. Congratulations! \n " +
-                            getInterviewStatistic(interviewSession.getId()))
+                            getInterviewStatistic(interviewSession))
                     .build();
         } else {
             Collections.shuffle(availableQuestions);
-            return buildSendMessage(interviewSession, availableQuestions.get(0));
+            Question nextQuestion = availableQuestions.get(0);
+            interviewSession.setLastQuestion(nextQuestion);
+            interviewSessionRepository.save(interviewSession);
+            return buildSendMessage(interviewSession, nextQuestion);
         }
     }
 
-    @Transactional
     @Override
-    public String checkAnswer(Long answerId, Long interviewSessionId) {
-        Answer answer = answerRepository.findById(answerId)
-                .orElseThrow(() -> new AnswerNotFoundException("Answer with id: \"" + answerId + "\" not found"));
-        InterviewSession interviewSession = interviewSessionRepository.findByIdAndIsFinishedFalse(interviewSessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found or it`s finished"));
+    public String checkAnswer(String answerData, InterviewSession interviewSession) {
+        Answer answer = answerRepository.findById(Long.parseLong(answerData))
+                .orElseThrow(() -> new AnswerNotFoundException("Answer with id: \"" + answerData + "\" not found"));
 
         userAnswerRepository.save(userAnswerMapper.convert(answer, interviewSession.getUser()));
 
@@ -106,34 +104,31 @@ public class QuizInterviewServiceImpl implements InterviewService {
         if (answer.isRight()) {
             interviewSession.setRightAnswers(interviewSession.getRightAnswers() + 1);
             interviewSession.setCorrectAnswersRate((double) ((interviewSession.getRightAnswers() / prevQuestions.size()) * 100));
+            interviewSessionRepository.save(interviewSession);
             return "\n\n\n Bingo! Your answer is correct! You are simply a genius! \n\n\n\n";
         } else {
             interviewSession.setWrongAnswers(interviewSession.getWrongAnswers() + 1);
             interviewSession.setCorrectAnswersRate(( (double) interviewSession.getRightAnswers() / prevQuestions.size()) * 100);
+            interviewSessionRepository.save(interviewSession);
             return "\n\n\n Ah, missed! But you're still great! \n\n\n\n";
         }
     }
 
-    @Transactional
     @Override
-    public String getInterviewStatistic(Long interviewSessionId) {
-        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
-
-        return " Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
-                "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
-                "Wrong Answers: " + interviewSession.getWrongAnswers() + "\n" +
-                "Correct answers rate: " + interviewSession.getCorrectAnswersRate();
-    }
-
-    @Transactional
-    @Override
-    public void finishInterview(Long interviewSessionId) {
-        InterviewSession interviewSession = interviewSessionRepository.findById(interviewSessionId)
-                .orElseThrow(() -> new InterviewSessionNotFoundException("InterviewSession with id " + interviewSessionId + " not found"));
+    public void finishInterview(InterviewSession interviewSession) {
         interviewSession.setIsFinished(true);
         interviewSession.setCorrectAnswersRate((double) interviewSession.getRightAnswers() / interviewSession.getQuestions().size() * 100);
         interviewSessionRepository.save(interviewSession);
+    }
+
+    @Override
+    public Optional<InterviewSession> getOpenedSessionByUserAndInterviewType(User user, InterviewType interviewType) {
+        return interviewSessionRepository.findAllByUserAndInterviewTypeAndIsFinishedFalse(user, interviewType);
+    }
+
+    @Override
+    public InterviewType getInterviewServiceType() {
+        return InterviewType.QUIZ_MODE;
     }
 
     private SendMessage buildSendMessage(InterviewSession interviewSession, Question nextQuestion) {

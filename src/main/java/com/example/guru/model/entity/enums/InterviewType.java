@@ -7,10 +7,8 @@ import java.util.Arrays;
 @AllArgsConstructor
 public enum InterviewType {
     QUIZ_MODE("quiz", "Question-answer format. A question with several options, one of which is correct."),
-    COMPETITIVE_MODE("quizUntilWrong",
-            "Question-answer format. A question with several options, one of which is correct. " +
-                    "The interview continues until the first incorrect answer is given."),
-    INTERACTIVE_AI_MODE("creativeQuiz", "");
+    INTERACTIVE_AI_MODE("aiMode", "Question-answer format. Prepared questions without options. " +
+            "Players should give answers in free format. Then AI processes these answers and gives a feedback.");
 
 
     private final String name;
