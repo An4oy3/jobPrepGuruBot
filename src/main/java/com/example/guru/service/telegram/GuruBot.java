@@ -10,6 +10,7 @@ import com.example.guru.util.CallBackDataHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
@@ -50,24 +51,39 @@ public class GuruBot implements LongPollingSingleThreadUpdateConsumer, SpringLon
             String[] callBackData = CallBackDataHelper.parseCallBack(update.getCallbackQuery());
 
             InterviewService interviewService = interviewServiceHandler.getInterviewService(callBackData[1]);
+            User user = userDataService.getByUserName(update.getCallbackQuery().getFrom().getUserName());
+            InterviewSession session = interviewService.getOpenedSessionByUserAndInterviewType(user, interviewService.getInterviewServiceType())
+                    .orElseGet(() -> interviewService.openInterview(user.getChat(), user));
+
 
             if (callBackData[0].equals("-1")) {
-                User user = userDataService.getByUserName(update.getCallbackQuery().getFrom().getUserName());
-                InterviewSession newSession = interviewService.openInterview(user.getChat(), user);
-                sendMessage = interviewService.generateQuestion(newSession.getId());
-                sendMessage.setText("\n\n\n Ok! Let`start new interview: \n" + sendMessage.getText());
+                sendMessage = interviewService.generateQuestion(session);
+                sendMessage.setText("\n\n Ok! Let`start: \n\n\n" + sendMessage.getText());
             } else if (callBackData[2].equals("-1")) {
-                interviewService.finishInterview(Long.parseLong(callBackData[0]));
+                interviewService.finishInterview(session);
                 sendMessage = SendMessage.builder()
                         .chatId(update.getCallbackQuery().getMessage().getChatId())
-                        .text("Thanks for the game! You were awesome \n\n\n" + interviewService.getInterviewStatistic(Long.parseLong(callBackData[0])))
+                        .text("Thanks for the game! You were awesome \n\n\n" + interviewService.getInterviewStatistic(session))
                         .build();
             } else {
-                String result = interviewService.checkAnswer(Long.parseLong(callBackData[2]), Long.parseLong(callBackData[0]));
-                sendMessage = interviewService.generateQuestion(Long.parseLong(callBackData[0]));
+                String result = interviewService.checkAnswer(callBackData[2], session);
+                sendMessage = interviewService.generateQuestion(session);
                 sendMessage.setText(result + sendMessage.getText());
             }
             executeMessage(sendMessage);
+        } else if (!update.hasCallbackQuery() && update.hasMessage()){
+            SendMessage sendMessage;
+            InterviewService interviewService = interviewServiceHandler.getInterviewService(InterviewType.INTERACTIVE_AI_MODE.name());
+
+            User user = userDataService.getByUserName(update.getMessage().getFrom().getUserName());
+            InterviewSession interviewSession = interviewService.getOpenedSessionByUserAndInterviewType(user, interviewService.getInterviewServiceType())
+                    .orElseGet(() -> interviewService.openInterview(user.getChat(), user));
+
+            String s = interviewService.checkAnswer(update.getMessage().getText(), interviewSession);
+            sendMessage = interviewService.generateQuestion(interviewSession);
+            sendMessage.setText(s + "\n\n" + sendMessage.getText());
+            executeMessage(sendMessage);
+
         }
     }
 
@@ -92,10 +108,6 @@ public class GuruBot implements LongPollingSingleThreadUpdateConsumer, SpringLon
     private InlineKeyboardMarkup getStartedPanel() {
         return InlineKeyboardMarkup
                         .builder()
-                        .keyboardRow(new InlineKeyboardRow(InlineKeyboardButton.builder()
-                                .text(InterviewType.COMPETITIVE_MODE.name())
-                                .callbackData("-1" + CALLBACK_DELIMITER + InterviewType.COMPETITIVE_MODE.name() + CALLBACK_DELIMITER)
-                                .build()))
                         .keyboardRow(new InlineKeyboardRow(InlineKeyboardButton.builder()
                                 .text(InterviewType.QUIZ_MODE.name())
                                 .callbackData("-1" + CALLBACK_DELIMITER + InterviewType.QUIZ_MODE.name() + CALLBACK_DELIMITER)
