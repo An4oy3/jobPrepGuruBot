@@ -107,12 +107,11 @@ create table public.ai_response$choice_data
     ai_response_id varchar(255)
         constraint fkc6jp8mcvtahnm9lvgon7cejxx
             references public.ai_response,
-    content        varchar(255),
+    content        TEXT,
     finish_reason  varchar(255),
     role           varchar(255)
         constraint ai_response$choice_data_role_check
             check ((role)::text = ANY
         ((ARRAY ['SYSTEM'::character varying, 'USER'::character varying, 'ASSISTANT'::character varying, 'TOOL'::character varying, 'FUNCTION'::character varying])::text[]))
     );
-
 
