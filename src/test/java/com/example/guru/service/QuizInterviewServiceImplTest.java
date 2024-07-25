@@ -68,7 +68,7 @@ public class QuizInterviewServiceImplTest {
                 .id(1L)
                 .categoryType(CategoryType.JAVA)
                 .text("text")
-                .answers(List.of(Answer.builder().id(123L).build()))
+                .answers(List.of(Answer.builder().id(123L).text("answer").build()))
                 .build();
 
         answer = Answer.builder()
@@ -128,10 +128,10 @@ public class QuizInterviewServiceImplTest {
         when(interviewSessionRepository.findById(1L)).thenReturn(Optional.of(interviewSession));
         when(questionRepository.findByCategoryAndNotIn(any(), any())).thenReturn(List.of(question));
 
-        SendMessage result = quizInterviewServiceImpl.generateQuestion(1L);
+        SendMessage result = quizInterviewServiceImpl.generateQuestion(interviewSession);
 
         assertEquals(interviewSession.getChat().getId().toString(), result.getChatId());
-        assertEquals("The next question is : \n" + question.getText(), result.getText());
+        assertEquals(" The next question is : \n" + question.getText() + "\n\n\n" + "Answer options: \n\n\n1. answer\n" , result.getText());
     }
 
     @Test
@@ -139,7 +139,7 @@ public class QuizInterviewServiceImplTest {
         when(interviewSessionRepository.findById(1L)).thenReturn(Optional.of(interviewSession));
         when(questionRepository.findByCategoryType(question.getCategoryType())).thenReturn(List.of());
 
-        SendMessage badResult = quizInterviewServiceImpl.generateQuestion(1L);
+        SendMessage badResult = quizInterviewServiceImpl.generateQuestion(interviewSession);
 
         assertEquals(interviewSession.getChat().getId().toString(), badResult.getChatId());
         assertTrue(badResult.getText().contains("You`ve answered all questions. Congratulations! \n "));
@@ -149,7 +149,7 @@ public class QuizInterviewServiceImplTest {
     public void getInterviewStatistic() {
         when(interviewSessionRepository.findById(interviewSession.getId())).thenReturn(Optional.of(interviewSession));
 
-        String result = quizInterviewServiceImpl.getInterviewStatistic(interviewSession.getId());
+        String result = quizInterviewServiceImpl.getInterviewStatistic(interviewSession);
 
         assertEquals(" Statistics: \n" + "Total Questions: " + interviewSession.getQuestions().size() + "\n" +
                 "Correct answers: " + interviewSession.getRightAnswers() + "\n" +
@@ -162,7 +162,7 @@ public class QuizInterviewServiceImplTest {
     public void finishInterviewTest() {
         when(interviewSessionRepository.findById(1L)).thenReturn(Optional.of(interviewSession));
 
-        quizInterviewServiceImpl.finishInterview(1L);
+        quizInterviewServiceImpl.finishInterview(interviewSession);
         assertTrue(interviewSession.getIsFinished());
         verify(interviewSessionRepository, times(1)).save(interviewSession);
     }
@@ -177,7 +177,7 @@ public class QuizInterviewServiceImplTest {
         when(interviewSessionRepository.findById(interviewSession.getId())).thenReturn(Optional.of(interviewSession));
         when(userAnswerMapper.convert(answer, user)).thenReturn(UserAnswer.builder().build());
 
-        String result = quizInterviewServiceImpl.checkAnswer(1L, 1L);
+        String result = quizInterviewServiceImpl.checkAnswer("1", interviewSession);
 
         verify(userAnswerRepository, times(1)).save(any());
 
@@ -200,13 +200,13 @@ public class QuizInterviewServiceImplTest {
         when(interviewSessionRepository.findById(interviewSession.getId())).thenReturn(Optional.of(interviewSession));
         when(userAnswerMapper.convert(answer, user)).thenReturn(UserAnswer.builder().build());
 
-        String result = quizInterviewServiceImpl.checkAnswer(1L, 1L);
+        String result = quizInterviewServiceImpl.checkAnswer("1", interviewSession);
 
         verify(userAnswerRepository, times(1)).save(any());
         assertEquals(2, interviewSession.getQuestions().size());
         assertEquals(1, interviewSession.getRightAnswers().intValue());
         assertEquals(1, interviewSession.getWrongAnswers().intValue());
         assertEquals(Optional.of(50.0), Optional.of(interviewSession.getCorrectAnswersRate()));
-        assertEquals("\n\n\n Ah, missed! But you're still great!", result);
+        assertEquals("\n\n\n Ah, missed! But you're still great! \n\n\n\n", result);
     }
 }
