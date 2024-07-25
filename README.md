@@ -26,7 +26,7 @@ To run the application in a development environment, follow these steps:
 
 1. Run the application in your development environment.
 
-2. Open Telegram and find the bot named jobPrepGuruBot.
+2. Open Telegram and find the bot named interview_preparation_guru_bot.
 
 3. Send the `/start` command in the chat with the bot.
 
