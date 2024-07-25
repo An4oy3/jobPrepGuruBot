@@ -24,12 +24,35 @@ To run the application in a development environment, follow these steps:
 
 ## Usage
 
-1. Run the application in your development environment.
+1. **Create a bot on Telegram**:
+    - Open the Telegram app and search for `BotFather`.
+    - Start a chat with `BotFather` and use the command `/newbot` to create a new bot.
+    - Follow the instructions to set up the bot and obtain the bot token.
 
-2. Open Telegram and find the bot named interview_preparation_guru_bot.
+2. **Add the bot token to your configuration**:
+    - Open the `application.yaml` file in your project.
+    - Add the obtained bot token to the file:
+      ```yaml
+      telegram:
+          token: YOUR_TELEGRAM_BOT_TOKEN
+      ```
+3. **Obtain a token for ChatGPT API**:
+    - Visit the [OpenAI API page](https://beta.openai.com/signup/) and sign up or log in.
+    - Generate an API token for ChatGPT.
 
-3. Send the `/start` command in the chat with the bot.
+4. **Add the ChatGPT API token to your configuration**:
+    - Open the `application.yaml` file in your project.
+    - Add the obtained ChatGPT API token to the file:
+      ```yaml
+      ai:
+        token: YOUR_CHATGPT_API_TOKEN
+      ```
+5. **Run the application**:
+    - Start the application in your development environment.
 
-4. Choose the interview mode:
-    - **QuizMode**: Questions with multiple-choice answers.
-    - **InteractiveMode**: Questions without multiple-choice options, with analysis and feedback.
+6. **Find and start using your bot on Telegram**:
+    - Open Telegram and search for the bot you created.
+    - Start a chat with the bot and send the `/start` command.
+    - Choose the interview mode:
+        - **QuizMode**: Questions with multiple-choice answers.
+        - **InteractiveMode**: Questions without multiple-choice options, with analysis and feedback.
